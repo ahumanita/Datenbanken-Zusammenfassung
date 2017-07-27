@@ -1,0 +1,1411 @@
+% !TEX program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+% !TEX spellcheck = de_DE
+
+\documentclass{scrartcl}
+\usepackage[a4paper, left= 1cm, textwidth=17cm, textheight=25cm]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{xcolor}
+\usepackage{wasysym} %Bowtie
+\usepackage{listings}
+\usepackage{amssymb} %gtrdot
+
+\usepackage{tikz}
+\usetikzlibrary{trees}
+\usetikzlibrary{arrows,positioning,shapes.multipart, shapes.geometric, shapes.misc}
+
+\definecolor{darkgreen}{HTML}{22a014}
+
+\newcommand{\key}[1]{{\textcolor{blue}{\textbf{#1}}}}
+\newcommand{\hint}{{\textcolor{darkgreen}{\textbf{$\gtrdot$}}}}
+\newcommand{\select}{\textbf{select }}
+\newcommand{\from}{\textbf{from }}
+\newcommand{\where}{\textbf{where }}
+
+\begin{document}
+
+%\title{Datenbanken Zusammenfassung}
+%\author{Anita Ullrich}
+%\maketitle
+%
+%Taschenrechner!
+
+\section{Was sind Datenbanken?}
+
+Sammlungen von Tabellen.
+
+Probleme ohne Datenbanken:
+\begin{itemize}
+	\itemsep0em
+	\item Verschwendung von Speicherplatz
+	\item „Vergessen“ von Änderungen
+	\item keine zentrale, „genormte“ Datenhaltung
+	\item Datenredundanz
+\end{itemize}
+
+\subsection{Regeln von \key{Codd}}
+
+\begin{tabular}{ll}
+	\textbf{Integration} & einheitliche, nichtredundante Datenverwaltung \\
+	\textbf{Operationen} & Speichern, Suchen, Ändern \\
+	\textbf{Katalog} & Zugriffe auf Datenbankbeschreibungen im Data Dictionary \\
+	\textbf{Benutzersichten} & \\
+	\textbf{Integritätssicherung} & Korrektheit des Datenbankinhalts \\
+	\textbf{Datenschutz} & Ausschluss unauthorisierter Zugriffe \\
+	\textbf{Transaktionen} & mehrere DB-Operationen als Funktionseinheit \\
+	\textbf{Synchronisation} & parallele Transaktionen koordinieren \\
+	\textbf{Datensicherung} & Wiederherstellung von Daten nach Systemfehlern \\
+\end{tabular}
+
+\subsection{3-Ebenen-Schemaarchitektur}
+
+\begin{tabular}{ll}
+	\begin{minipage}{.6\textwidth}
+		\begin{itemize}
+			\itemsep0em
+			\item Zusammenhang zwischen
+			\begin{itemize}
+				\item \key{Konzeptuellem} Schema (Ergebnis der Datendefinition)
+				\item \key{Internem} Schema (Festlegung der Dateiorganisationen und Zugriffspfade)
+				\item \key{Externen} Schemata (Ergebnis der Sichtdefinition)
+				\item Anwendungsprogrammen (Ergebnis der Anwendungsprogrammierung)
+			\end{itemize}
+		\end{itemize}
+	\end{minipage}
+	&
+	\begin{minipage}{.5\textwidth}
+		%\includegraphics[width=\textwidth]{schema.png}
+	\end{minipage}
+	\\
+\end{tabular}
+
+Beispiel Indexstruktur: \\
+%\includegraphics[width=.5\textwidth]{indexstruktur.png}
+
+\subsection{Datenunabhängigkeit}
+
+\begin{itemize}
+	\itemsep0em
+	\item Stabilität der Benutzerschnittstelle gegen Änderungen
+	\item \key{physisch}: Änderungen der Dateiorganisationen und Zugriffspfade haben keinen Einfluss auf das konzeptuelle Schema
+	\item \key{logisch}: Änderungen am konzeptuellen und gewissen externen Schemata haben keine Auswirkungen auf andere externe	Schemata und Anwendungsprogramme
+\end{itemize}
+
+\section{Relationen}
+
+\subsection{Begriffe}
+
+\begin{tabular}{lp{12.5cm}}
+	\key{Datenbank} & Menge von Tabellen\\
+	\key{Datenbankschema} & Menge von Relationenschemata \\
+	\key{DataBaseManagmentSystem} & Dinge, um Datenbanken zu benutzen, wie MySQL oder PostgreSQL,... (DBMS) \\
+	\key{Relationenschema} & Spaltennamen\\
+	\key{Relation} & Weitere Einträge in der Tabelle\\
+	\key{Tupel} & Eine Zeile der Tabelle\\
+	\key{Attribut}	& Eine Spaltenüberschrift\\
+	\key{Attributwert} & Ein Eintrag\\
+	\key{Wertebereich} & mögliche Werte eines Attributs (auch \key{Domäne}) \\
+	\key{Schlüssel} & minimale Menge von Attributen, deren Werte ein Tupel einer Tabelle eindeutig identifizieren \\
+	\key{Primärschlüssel} & Menge von Attributen identifizieren ein Tupel der Relation eindeutig. (Integritätsbedingung)\\
+	\key{Fremdschlüssel} & Primärschlüssel einer fremden Tabelle, der als eindeutiger Verweis benutzt wird. (Integritätsbedingung) \\
+	\key{Fremdschlüsselbedingung} & alle Attributwerte des Fremdschlüssels tauchen in der anderen Relation als Werte des Schlüssels auf \\
+	\key{Primattribut} & Element eines Schlüssels \\
+	\key{zusammengesetzter} \textbf{Schlüssel} & Der Schlüssel besteht aus mehr als einem Attribut \\
+\end{tabular}
+
+\subsection{Wertebereiche in SQL}
+
+\begin{itemize}
+	\itemsep0em
+	\item \key{integer} (oder auch integer4, int)
+	\item \key{smallint} (oder auch integer2)
+	\item \key{float}(p) (oder auch kurz float)
+	\item \key{decimal}(p,q) und \key{numeric}(p,q) mit jeweils q Nachkommastellen
+	\item \key{character}(n) (oder kurz \key{char}(n), bei n = 1 auch char) für	Zeichenketten (Strings) fester Länge n
+	\item \key{character varying}(n) (oder kurz \key{varchar}(n) für Strings variabler Länge bis zur Maximallänge n
+	\item \key{bit}(n) oder \key{bit varying}(n) analog für Bitfolgen, und \key{date}, \key{time} bzw. \key{timestamp} für Datums-, Zeit- und kombinierte Datums-Zeit-Angaben
+	\item \key{Null} repräsentiert die Bedeutung „Wert unbekannt“, nimmt auch keinen der vorigen Wertebereiche an (Vergleich mit Null immer false)
+\end{itemize}
+
+\subsection{Relationenalgebra}
+
+{\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|lp{12.2cm}|}
+	\hline
+	Basisoperation & Beschreibung \\
+	\hline
+	\key{Selektion} & Auswahl von Zeilen einer Tabelle anhand eines	Selektionsprädikats \\
+	\key{Projektion} & Auswahl von Spalten durch Angabe einer Attributliste (entfernt doppelte Tupel) \\
+	\key{Verbund}/\key{Join} & verknüpft Tabellen über gleichbenannte Spalten, indem er jeweils zwei Tupel verschmilzt, falls sie dort gleiche Werte aufweisen \\
+	\key{Umbenennung} & Anpassung von Attributnamen (z.B. bei Join mit gleicher Tabelle) \\
+	\key{Vereinigung} & listet die Tupelmengen zweier Relationen in einer neuen Relation auf, wobei die Attributmengen identisch sein müssen \\
+	\key{Differenz} & eliminiert Tupel in der ersten Relation, die auch in der zweiten Relation vorhanden sind\\
+	\key{Durchschnitt} & listet die Tupel auf, die in beiden Relationen vorkommen \\
+	\key{Kreuzprodukt} & verknüpft alle Tupel der einen Tabelle mit allen Tupel der anderen Tabelle \\
+	\hline
+\end{tabular}
+}
+\vspace{1em}\\
+{\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|lll|}
+	\hline 
+	Basisoperation & Relationenalgebra & SQL-Befehl \\
+	\hline
+	\textbf{Selektion} & $\sigma_{Bedingung}(Tabelle)$ & select * \\&&from Tabelle \\&&where \key{Selektionsprädikat} \\
+	\textbf{Projektion} & $\pi_{Spalte}(Tabelle)$  & select \key{distinct} \key{Spalte} \\&&from Tabelle \\
+	\textbf{Join} & $Tabelle1\ \Bowtie\ Tabelle2$ & select * \\&&from Tabelle1 \key{natural  join} Tabelle2 \\
+	\textbf{Umbenennung} & $\beta_{NeuerName\leftarrow Attributname}(Tabelle)$  & select * \\&&from Tabelle \key{as} NeuerName \\
+	\textbf{Vereinigung} & $Tabelle1\cup Tabelle2$ & select * from Tabelle1 \\&& \key{union} \\&& select * from Tabelle2 \\
+	\textbf{Differenz} & $Tabelle1 - Tabelle2$ & select * from Tabelle1 \\&& \key{except} \\&& select * from Tabelle2 \\
+	\textbf{Durchschnitt} & $Tabelle1\cap Tabelle2$ & select * from Tabelle1 \\&& \key{intersect} \\&& select * from Tabelle2 \\
+	\textbf{Kreuzprodukt} & $Tabelle1\times Tabelle2$ & select * \\&& from Tabelle1\key{,} Tabelle2 \\
+	\hline
+\end{tabular}
+}
+
+\begin{tabular}{p{3cm}l}
+	\textbf{Beispiele}: & \\
+	Minimum & $\pi_a(R) - \beta_{a\leftarrow a_2}(\pi_{a_2}(\sigma_{a_1 < a_2}( \beta_{a_1\leftarrow a}(R) \times \beta_{a_2\leftarrow a}(R ) ) ) $ \\
+	Maximum & $\pi_a(R) - \beta_{a\leftarrow a_1}(\pi_{a_1}(\sigma_{a_1 < a_2}( \beta_{a_1\leftarrow a}(R) \times \beta_{a_2\leftarrow a}(R ) ) ) $ \\
+	Musiker die in  & $\pi_{a1.name}(\sigma_{a1.type='p'\wedge a2.type='g'\wedge aa.r\_type='member\ of\ band'} ( \beta_{a1}(artist) $ \\
+	mindestens einer Band spielen& $ \times_{a1.id = aa.entity0} \beta_{aa}(artist\_artist) ) \times_{a2.id = aa.entity1} \beta_{a2} (artist)    $ \\
+\end{tabular}
+
+\subsection{Erstellungsoperationen - DataDefinitionLanguage (DDL)}
+
+\hint generiert Strukturen \\
+\hint ändert Definition der Daten \\
+
+\begin{tabular}{|lll|}
+\hline
+	\begin{minipage}{.25\textwidth}
+		\textbf{create}: Die Ablage des Relationenschemas im Data Dictionary, als auch die Vorbereitung einer „leeren Basisrelation“ in der Datenbank
+	\end{minipage}
+	&
+	\begin{minipage}{.25\textwidth}
+		\key{create} \key{table} basisrelationenname ( \\
+		spaltenname1 wertebereich1 [not null], \\
+		... \\
+		spaltennamek wertebereichk [not null]). \\
+	\end{minipage}
+	&
+	\begin{minipage}{.5\textwidth}
+		\key{create table} EMP\_TEST \\
+		(empID number \\
+		ename varchar(100) \textbf{not null}, \\
+		departmentID number, \\
+		salary number, \\
+		jobID varchar(3), \\
+		hiredate date \textbf{not null,} \\
+		comm number, \\
+		\key{foreign key} (jobID, comm) \key{references} JOB\_TEST \\
+		\key{primary key} (empID, departmentID) );
+	\end{minipage}
+	\\
+\hline
+	\textbf{drop} & \textbf{rename} & \\
+	$\cdot$ Tabelle löschen & $\cdot$ Tabelle umbenennen &\\
+	 \key{drop table} $[$table name$]$ & \key{rename table} $[$table name$]$ & \\
+	 & \key{to} $[$new table name$]$ & \\ 
+\hline
+\end{tabular}
+
+
+\subsection{Änderungsoperationen - DataManipulationLanguage (DML)}
+
+\hint operiert auf Strukturen \\
+\hint SFW-Block gehört auch zu DML \\
+\textbf{\textcolor{red}{!}} Löschoperationen können zur Verletzung von Integritätsbedingungen führen! Beispielsweise Verletzung der Fremdschlüsseleigenschaft in einer anderen Relation. \\
+
+\begin{tabular}{|lll|}
+\hline
+	\begin{minipage}{.25\textwidth}
+		\key{update}: Veränden von Tupeln in einer Relation.
+	\end{minipage}
+	& 
+	\begin{minipage}{.25\textwidth}
+		\key{update} basisrelation \\
+		\key{set} attribut1 = ausdruck1, \\
+		... \\
+		attributn = ausdruckn \\
+		$[$ \where bedingung $]$
+	\end{minipage}
+	&
+	\begin{minipage}{.5\textwidth}
+		\key{update} EMP\_TEST \\
+		\key{set} \\
+		ename = 'Arne Anonym' \\
+		\where \\
+		empID = 123
+	\end{minipage}
+	 \\
+	 \hline
+	 \begin{minipage}{.25\textwidth}
+	 	\key{insert}: Einfügen von Tupeln in eine Relation.
+	 \end{minipage}
+	 & 
+	 \begin{minipage}{.25\textwidth}
+	 	\key{insert} \key{into} basisrelation \\
+	 	$[$ (attribut1, ..., attributn) $]$ \\
+	 	\key{values} (konstante1, ..., konstanten)
+	 \end{minipage}
+	 &
+	 \begin{minipage}{.5\textwidth}
+	 	\key{insert into} EMP\_TEST \\
+	 	(empID, ename, departmentID, salray, jobID, hiredate, comm) \\
+	 	\key{values} \\
+	 	( 1234, 'Max Mustermann', 12, 150000, 'abc', 21.01.2013, 123456 );
+	 \end{minipage}
+	 \\
+	 \hline
+	 \begin{minipage}{.25\textwidth}
+		 \key{delete}: Löschen eines Tupels aus einer Relation.
+	 \end{minipage}
+	 & 
+	 \begin{minipage}{.25\textwidth}
+	 	\key{delete} \\
+	 	\from basisrelation \\
+	 	$[$ \where bedingung $]$
+	 \end{minipage}
+	 &
+	 \begin{minipage}{.5\textwidth}
+	 \key{delete} \from EMP\_TEST \\
+	 \where\\
+	 empID = 123;
+	\end{minipage}
+	 \\
+\hline
+\end{tabular}
+
+\section{ER-Modell}
+
+\subsection{Datenbankmodelle}
+
+\begin{itemize}
+	\itemsep0em
+	\item System von Konzepten zur Beschreibung von Datenbanken. Es legt Syntax und Semantik von Datenbankbeschreibungen für ein Datenbanksystem fest.
+	\item statische Eigenschaften: Objekte, Beziehungen inklusive Datentypen
+	\item dynamische Eigenschaften: Opertaionen und Beziehungen zwischen Operationen
+	\item Integritätsbedingungen an Objekte und Operationen
+\end{itemize}
+
+\subsection{Bezeichnungen}
+
+\begin{tabular}{lp{12cm}}
+	\key{Entity} & zu repräsentierende Informationseinheit \\
+	\key{Entity-Typ} & Gruppierung von Entitys mit gleichen Eigenschaften \\
+	%$\rightarrow$ \key{abhängig} &  Identifikation über funktionale Beziehung als Schlüssel \\
+	\key{Beziehungstyp} & Gruppierung von Beziehungen zwischen Entitys \\
+	\key{Attribut} & datenwertige Eigenschaft eines Entitys oder einer Beziehung \\
+	\key{Schlüssel} & identifizierende Eigenschaft von Entitys \\
+	\key{Kardinalitäten} & Einschränkung von Beziehungstypen bezüglich der mehrfachen Teilnahme von Entitys an der Beziehung ($[min,max]$-Notation) \\
+	\key{Stelligkeit} & Anzahl der an einem Beziehungstyp beteiligten EntityTypen \\
+	%\key{funktionale Beziehung} & Beziehungstyp mit Funktionseigenschaft\\
+	%\key{abhängige Entitys} & Entitys, die nur abhängig von anderen Entitys existieren können \\
+	%\key{1:1-Beziehung} & jedem Entity e1 vom Entity-Typ E1 ist maximal ein Entity e2 aus E2 	zugeordnet und umgekehrt (Bsp: Mann ist verheiratet mit Frau, z.B: $[0,1]:[1,1]$) \\
+	%\key{1:N-Beziehung} & jedem Entity e1 vom Entity-Typ E1 sind beliebig viele Entities E2
+	%zugeordnet, aber zu jedem Entity e2 gibt es maximal ein e1 aus E1 (Bsp: Mutter hat Kinder, z.B: $[0,1]:[1,*]$) \\
+	%\key{N:1-Beziehung} & Jedem Entity eines Entity-Typs E1 wird maximal ein Entity eines Entity-Typs E2 zugeordnet (z.B: $[0,*]:[1,1]$)\\
+	%\key{M:N-Beziehung} & keine Restriktionen (Bsp: Bestellung umfasst Produkte, z.B:$[0,*]:[1,*]$)\\
+	\key{IST-Beziehung} & Spezialisierung von Entity-Typen (injektiv, Attributvererbung)\\
+	\key{Optionalität} & Attribute oder funktionale Beziehungen als partielle Funktionen \\
+\end{tabular}
+
+\subsection{Nice to know}
+
+\begin{itemize}
+	\itemsep0em
+	\item[\hint] für die Art der Beziehung immer die hintere Zahl anschauen
+	\item Wertemengen sind beschrieben durch Datentypen
+	\item vorgegebene Standard-Datentypen (int, string, date)
+	\item Entities sind nicht direkt darstellbar (wie Werte), sondern nur über ihre Eigenschaften beobachtbar
+	\item Attribute werden für Entity-Typen deklariert
+	\item Primärschlüssel markieren durch Unterstreichung (IST-Entities haben keinen eigenen, hat den der Original-Entity)
+	\item Beziehungen können zwischen mindestens 2 Entity-Typen bestehen
+	\item Beziehungen werden auch vererbt
+	\item wenn Entity-Typ mehrfach an einem Beziehungstyp beteiligt: Vergabe von Rollennamen möglich
+	\item Beziehungen können ebenfalls Attribute besitzen
+	\item für Beziehung $Entity_{1}\ IST\ Entity_{2}$ gilt immer: $IST(Entity_{1}[1, 1], Entity_{2}[0, 1])$
+	%hints
+	\item[\hint] Attribute immer auf die gleiche Seite vom Strich schreiben, bei einer Entity
+	\item[\hint] $[min;max]$-Notation begründen, wenn nicht klar, der Default-Wert ist $[0,*]$
+	\item[\hint] Schlüssel möglichst klein halten
+	\item[\textbf{\textcolor{red}{!}}] keine Fremdschlüssel im ER-Modell!
+\end{itemize}
+
+%\subsection{textuelle Notation}
+
+%\begin{tabular}{ll}
+%	\hline
+%	Bezeichnung & textuelle Notation \\
+%	\hline \\
+%	Beziehung & $beziehung ( Entity_{1}, ..., Entity_{n} )$ \\
+%	Beziehung mit Attribut & $beziehung( Entity_{1}, ..., Entity_{n} ; Attribut_{1}, ..., Attribut_{n} )$ \\
+%	Min:Max-Beziehung & $beziehung(Entity_{1}, ..., Entity_{i}[min_{i}, max_{i}], ..., Entity_{n})$ \\
+%	partielle funktionale Beziehung & $lagert_in(Produkt[0,1],Fach[0,3])$ \\
+%	totale funktionale Beziehung & $liefert(Lieferant[0,*],Produkt[1,1])$ \\
+%	Ist-Beziehung & $Entity_{1}\ IST\ Entity_{2}$ \\
+%	\hline
+%\end{tabular}
+
+\subsection{Beispiel}
+
+\begin{tikzpicture}[node distance = 2cm,
+	entitytyp/.style={shape=rectangle, draw=blue, align=center, text=blue },
+	beziehungstyp/.style={shape=rectangle, diamond, align=center, draw=red, text=red},
+	attribut/.style={shape=ellipse, draw=black, align=center, text=black,  font=\fontsize{8}{8}\selectfont}
+	]
+
+	%EntitysRelationships
+	
+	\node[entitytyp] (P) {
+		Professor
+	};
+	\node[beziehungstyp] (hält) [right=of P] {
+		hält
+	};
+	\node[chamfered rectangle, chamfered rectangle xsep=2cm, draw, color=darkgreen] (ist) [below=of P] {
+		ist
+	};
+	\node[entitytyp] (V) [right=of hält] {
+		Vorlesung
+	};
+	\node[entitytyp] (L) [below=of ist] {
+		Lehrpersonal
+	};
+	\node[beziehungstyp] (benotet) [right=of ist] {
+		benotet
+	};
+	\node[beziehungstyp] (hört) [below=of V] {
+		hört
+	};
+	\node[entitytyp] (S) [below=of hört]{
+		Student
+	};
+	
+	%Attribute
+	
+	\node[attribut] (fachgebiet) [above=of P,yshift=-1cm]{
+		Fachgebiet
+	};
+	\node[attribut] (mid) [below=of L,xshift=-0.5cm,yshift=1cm]{
+		\underline{mID}
+	};
+	\node[attribut] (nameL) [right=of mid,xshift=-1cm]{
+		Name
+	};
+	\node[attribut] (vid) [above=of V,yshift=-1cm]{
+		\underline{vID}
+	};
+	\node[attribut] (semester) [above right=of V,yshift=-0.5cm]{
+		\underline{Semester}
+	};
+	\node[attribut] (nameV) [right=of V,xshift=-1cm]{
+		Name
+	};
+	\node[attribut] (note) [below=of benotet,xshift=-0.5cm,yshift=1cm]{
+		Note
+	};
+	\node[attribut] (matnr) [below left=of S,xshift=0.7cm,yshift=0.7cm]{
+		\underline{matNR}
+	};
+	\node[attribut] (beginn) [below right=of S,xshift=-0.7cm,yshift=0.7cm]{
+		Studienbeginn
+	};
+	\node[attribut] (fach) [right=of S,xshift=-1cm]{
+		Studienfach
+	};
+	\node[attribut] (nameS) [below=of S,yshift=1cm]{
+		Name
+	};
+	
+	%Paths
+	
+	\draw[color=darkgreen] (ist)--(L) ;
+	\draw[-triangle 45, color=darkgreen] (P)--(ist) ;
+	\draw[color=black] (P)--(fachgebiet) ;
+	\draw[color=black] (V)--(vid) ;
+	\draw[color=black] (V)--(semester) ;
+	\draw[color=black] (V)--(nameV) ;
+	\draw[color=black] (L)--(mid) ;
+	\draw[color=black] (L)--(nameL) ;
+	\draw[color=black] (benotet)--(note) ;
+	\draw[color=black] (S)--(matnr) ;
+	\draw[color=black] (S)--(beginn) ;
+	\draw[color=black] (S)--(fach) ;
+	\draw[color=black] (S)--(nameS) ;
+	\draw[color=red] (P)--(hält)  node [pos=0.33,below,font=\footnotesize] {$[1,*]$} ;
+	\draw[color=red] (hält)--(V)  node [pos=0.66,above,font=\footnotesize] {$[1,1]$} ;
+	\draw[color=red] (P)--(benotet)  node [pos=0.23,below left,font=\footnotesize] {$[0,*]$} ;
+	\draw[color=red] (benotet)--(S)  node [pos=0.76,above right,font=\footnotesize] {$[0,*]$} ;
+	\draw[color=red] (V)--(benotet)  node [pos=0.33,above,font=\footnotesize] {$[0,*]$} ;
+	\draw[color=red] (V)--(hört)  node [pos=0.33,left,font=\footnotesize] {$[0,*]$} ;
+	\draw[color=red] (hört)--(S)  node [pos=0.66,right,font=\footnotesize] {$[0,*]$} ;	
+
+\end{tikzpicture}
+
+\section{Datenbankentwurf}
+
+\subsection{Anforderungen an Entwurf}
+
+\begin{itemize}
+	\itemsep0em
+	\item Anwendungsdaten jeder Anwendung sollen aus Daten der Datenbank ableitbar sein (und zwar möglichst effizient)
+	\item nur „vernünftige“ (wirklich benötigte) Daten sollen gespeichert werden
+	\item nicht-redundante Speicherung
+\end{itemize}
+
+\subsection{Phasenmodell}
+
+%\includegraphics[width=\textwidth]{phasenmodell.png}
+
+\subsection{Anforderungsanalyse}
+
+\begin{itemize}
+	\itemsep0em
+	\item Sammlung des Informationsbedarfs in den Fachabteilungen
+	\item informale Beschreibung (Texte, tabellarische Aufstellungen, Formblätter, usw.) des Fachproblems
+	\item Trennen der Information über Daten (Datenanalyse) von den Information über Funktionen (Funktionsanalyse)
+\end{itemize}
+
+\subsection{Konzeptioneller Entwurf}
+
+\begin{itemize}
+	\itemsep0em
+	\item erste formale Beschreibung des Fachproblems
+	\item semantisches Datenmodell (z.B: ER-Modell)
+	\item Modellierung von \key{Sichten} (virutelle Relation zur vereinfachten Nutzung) z.B. für verschiedene Fachabteilungen
+	\item Analyse der vorliegenden Sichten in Bezug auf Konflikte
+	\item Integration der Sichten in ein Gesamtschema
+	\item Phasen: Sichtenentwurf $\rightarrow$ Sichtenanalyse $\rightarrow$ Sichtenintegration
+	\item ER-Modellierung von verschiedenen Sichten auf Gesamtinformation, z.B. für verschiedene Fachabteilungen eines Unternehmens
+	\item Sichtenintegration:
+	\begin{itemize}
+		\item Analyse der vorliegenden Sichten in Bezug auf Konflikte
+		\item Integration der Sichten in ein Gesamtschema
+	\end{itemize}
+\end{itemize}
+
+\subsection{logischer Entwurf}
+
+\begin{itemize}
+	\itemsep0em
+	\item Vorgehensweise:
+	\begin{itemize}
+		\item Transformation des konzeptionellen Schemas z.B. ER (relationales Modell)
+		\item Verbesserung des relationalen Schemas anhand von Gütekriterie (Normalisierung)
+		\item Ziel: Vermeidung von Redundanzen
+	\end{itemize}
+	\item Ergebnis: : logisches Schema, z.B. Sammlung von Relationenschemata
+\end{itemize}
+
+\subsection{Kapazitätserhaltende Abbildungen}
+
+
+
+\section{Relationale Entwurfstheorie}
+
+\subsection{Integritätsbedingungen}
+
+\begin{itemize}
+	\itemsep0em
+	\item Identifizierende Attributmenge $K := {B_1, . . . , B_k} \subseteq R: \forall t_1, t_2 \in r [t_1 \neq t_2 \Rightarrow  \exists B \in K : t_1(B) \neq t_2(B)]$
+	\item Schlüssel: ist minimale identifizierende Attributmenge
+	\item Primattribut: Element eines Schlüssels
+	\item Primärschlüssel: ausgezeichneter (ein bestimmter) Schlüssel
+	\item Oberschlüssel oder Superkey: jede Obermenge eines Schlüssels (= identifizierende Attributmenge)
+	\item Fremdschlüssel: $X(R_1) \rightarrow Y(R_2) {t(X)|t \in r_1} \subseteq {t(Y)|t \in r_2}$
+\end{itemize}
+
+%\subsection{Überblick}
+%
+%\begin{itemize}
+%	\itemsep0em
+%	\item Vermeidung von \key{Redundanzen} (wegen Speicherplatz und korrekten Änderungsoperationen unerwünscht) durch Aufspalten von Relationenschemata, ohne gleichzeitig:
+%	\begin{itemize}
+%		\item semantische Informationen zu verlieren (Abhängigkeitstreue)
+%		\item die Möglichkeit zur Rekonstruktion der Relationen zu verlieren (Verbundtreue)
+%	\end{itemize}
+%	\item Redundanzvermeidung durch \key{Normalformen}
+%	\item globale Redundanzen: \key{Minimalität}
+%\end{itemize}
+%
+%\textbf{Ziel des Datenbankentwurfs}: alle gegebenen funktionalen
+%Abhängigkeiten in „\key{Schlüsselabhängigkeiten}“ umformen, ohne dabei
+%semantische Information zu verlieren (Dinge hängen nur vom Primärschlüssel ab, man kann nicht aus anderen Dingen Schlüsse ziehen, d.h. für andere Abhängigkeiten neue Tabelle anlegen).
+%
+%\subsection{funktionale Abhängigkeit (functional dependencies)}
+%
+%\begin{itemize}
+%	\itemsep0em
+%	\item \key{funktionale Abhängigkeit} zwischen Attributmengen X und Y einer Relation
+%	\item Unterscheiden sich zwei Tupel in den X-Attributen nicht, so haben sie auch gleiche Werte für alle Y-Attribute
+%	\item Notation: $X\rightarrow Y$
+%\end{itemize}
+%
+%\subsection{Erste Normalform}
+%
+%\begin{itemize}
+%	\itemsep0em
+%	\item erlaubt nur \key{atomare} Attribute in den Relationenschemata
+%	\begin{itemize}
+%		\item Attributwerte sind Elemente von Standard-Datentypen wie \textbf{integer} oder \textbf{string}
+%	\end{itemize}
+%\end{itemize}
+%
+%\textbf{Beispiel}: \\
+%\begin{center}
+%	\begin{tabular}{|llll|}
+%		\hline
+%		Weingut & Anbaugebiet & Region & WName \\
+%		\hline
+%		Ch. La Rose & Saint-Emilion & Bordeaux & La Rose Grand Cru \\
+%		Creek & Barossa Valley & South Australia & \textcolor{red}{\fbox{Creek Shiraz, Pinot Noir}} \\
+%		Helena & Napa Valley & Kalifornien & \textcolor{red}{\fbox{Zinfandel, Pinot Noir}} \\
+%		\hline
+%	\end{tabular}
+%	\\
+%	\vspace{1em}
+%	{\Huge $\Downarrow$}
+%	\\
+%	\vspace{1em}
+%	\begin{tabular}{|llll|}
+%		\hline
+%		Weingut & Anbaugebiet & Region & WName \\
+%		\hline
+%		Ch. La Rose & Saint-Emilion & Bordeaux & La Rose Grand Cru \\
+%		Creek & Barossa Valley & South Australia & \textcolor{darkgreen}{Creek Shiraz} \\
+%		Creek & Barossa Valley & South Australia & \textcolor{darkgreen}{Pinot Noir} \\
+%		Helena & Napa Valley & Kalifornien & \textcolor{darkgreen}{Zinfandel} \\
+%		Helena & Napa Valley & Kalifornien & \textcolor{darkgreen}{Pinot Noir} \\
+%		\hline
+%	\end{tabular}
+%\end{center} 
+%
+%\subsection{Zweite Normalform}
+%
+%\begin{itemize}
+%	\itemsep0em
+%	\item \key{partielle Abhängigkeit} liegt vor, wenn ein Nichtschlüsselattribut \key{funktional} schon von einem Teil des Schlüssels abhängt
+%	\item Zweite Normalform \textbf{eliminiert} derartige partielle Abhängigkeiten bei \key{Nichtschlüsselattributen}
+%	\item[\hint] partiell abhängiges Attribut stört nur, wenn es kein Primattribut ist
+%\end{itemize}
+%
+%\textbf{Beispiel}:
+%\begin{center}
+%	{\renewcommand{\arraystretch}{1.1}
+%	\begin{tabular}{|lllllr|}
+%		\hline
+%		\underline{\textcolor{red}{Na}\textcolor{violet}{me}} & \underline{\textcolor{red}{Wein}\textcolor{brown}{gut}} & \textcolor{violet}{Farbe} & \underline{\textcolor{cyan}{Anbau}\textcolor{brown}{gebiet}} & \textcolor{brown}{Reg}\textcolor{cyan}{ion} &  \textcolor{red}{Preis} \\
+%		\hline
+%		Pinot Noir & Creek & Rot & Barossa Valley & South Australia & 10.99 \\
+%		Zinfandel & Helena & Rot & Napa Valley & Kalifornien & 5.99 \\
+%		Pinot Noir & Helena & Rot & Napa Valley & Kalifornien & 19.99 \\
+%		Riesling & Reserve Müller & Weiß & Rheingau & Hessen & 14.99 \\
+%		Chardonnay & Bighorn & Weiß & Napa Valley & Kalifornien & 9.90 \\
+%		\hline
+%	\end{tabular}
+%	}
+%	\\
+%	\vspace{1em}
+%	{\Huge $\Downarrow$}
+%	\\
+%	\vspace{1em}
+%	\begin{minipage}{.43\textwidth}
+%		\begin{itemize}
+%			\itemsep0em
+%			\item[] Funktionale Abhängigkeiten:
+%			\item[\textcolor{red}{f1:}] Name, Weingut $\rightarrow$ Preis
+%			\item[\textcolor{violet}{f2:}] Name $\rightarrow$ Farbe
+%			\item[\textcolor{brown}{f3:}] Weingut $\rightarrow$ Anbaugebiet, Region
+%			\item[\textcolor{cyan}{f4:}] Anbaugebiet $\rightarrow$ Region
+%		\end{itemize}
+%	\end{minipage}
+%	\\
+%	\vspace{1em}
+%	{\Huge $\Downarrow$}
+%	\\
+%	\vspace{.5em}
+%	{\renewcommand{\arraystretch}{1.5}
+%	\begin{tabular}{l}
+%		In einzelne Relationen aufgespalten: \\
+%		\textcolor{red}{R1}(\underline{Name, Weingut}, Preis) \\
+%		\textcolor{violet}{R2}(\underline{Name}, Farbe) \\
+%		\textcolor{brown}{R3}(\underline{Weingut}, Anbaugebiet, Region) \\
+%	\end{tabular}
+%	}
+%\end{center}
+%\hint\ \textcolor{brown}{f3} und \textcolor{cyan}{f4} werden nicht aufgespalten, da Anbaugebiet ein Teil des Schlüssels ist und so als Schlüsselattribut funktional von Weingut abhängen darf in der 2. Normalform. In diesem Beispiel ist Anbaugebiet in R3 kein Schlüssel mehr, da hier Weingut als eindeutig angesehen wird.
+%
+%\subsection{Dritte Normalfrom}
+%
+%\begin{itemize}
+%	\itemsep0em
+%	\item eliminiert (zusätzlich) \key{transitive} Abhängigkeiten
+%	\item nur Nicht-Schlüsselattribute als Endpunkt transitiver Abhängigkeiten
+%\end{itemize}
+%
+%\textbf{Beispiel}:
+%\begin{center}
+%	{\renewcommand{\arraystretch}{1.5}
+%	\begin{tabular}{|l|}
+%		\hline
+%		R3(\underline{\textcolor{brown}{Weingut}}, \textcolor{brown}{Anbau}\textcolor{cyan}{gebiet}, \textcolor{cyan}{Region}) \\
+%		\hline
+%		Weingut $\rightarrow$ Anbaugebiet \\
+%		Anbaugebiet $\rightarrow$ Region \\
+%		\hline
+%	\end{tabular}
+%	}
+%	\\
+%	\vspace{1em}
+%	{\Huge $\Downarrow$}
+%	\vspace{1em}
+%	\\
+%	{\renewcommand{\arraystretch}{1.5}
+%	\begin{tabular}{ll}
+%		\textcolor{brown}{R3\_1}(\underline{Weingut}, Anbaugebiet) \\
+%		\textcolor{cyan}{R3\_2}(\underline{Anbaugebiet}, Region) \\
+%	\end{tabular}
+%	}
+%\end{center}
+%
+%\subsection{Zusammenfassung}
+%
+%{\renewcommand{\arraystretch}{1.2}
+%\begin{tabular}{|ll|}
+%	\hline
+%	Schemaeigenschaft & Kurzcharakteristik \\
+%	\hline
+%	1NF & nur atomare Attribute \\
+%	2NF & keine partielle Abhängigkeit eines Nicht-Primattributes von einem Schlüssel \\
+%	3NF & keine transitive Abhängigkeit eines Nicht-Primattributes von einem Schlüssel \\
+%	BCNF & keine transitive Abhängigkeit eines Attributes von einem Schlüssel \\
+%	Minimalität & minimale Anzahl von Relationenschemata, die die anderen Eigenschaften erfüllt \\
+%	\hline
+%\end{tabular}
+%}
+
+\section{SQL}
+
+\subsection{Struktur}
+
+\hint Wo eine Relation steht, kann auch wieder eine Anfrage stehen.\\
+
+\key{select}
+\begin{itemize}
+	\itemsep0em
+	\item Projektionsliste
+	\item arithmetische Operationen und Aggregatfunktionen
+\end{itemize}
+\key{from}
+\begin{itemize}
+	\itemsep0em
+	\item zu verwendende Relationen, evtl. Umbenennungen
+\end{itemize}
+\key{where}
+\begin{itemize}
+	\itemsep0em
+	\item Selektions-, Verbundbedingungen
+	\item Geschachtelte Anfragen (wieder ein SFW-Block)
+\end{itemize}
+
+\subsection{Verbunde}
+
+{\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{|l|l|}
+	\hline
+	\key{Natürlicher Verbund} in SQL92 & \key{expliziter Verbund: natural join}  \\
+	\hline
+	$\bullet$ durch Kreuzprodukt & $\bullet$ Abkürzung für Anfrage mit Kreuzprodukt \\
+	\select * & \select *  \\
+	\from WEINE\key{,} ERZEUGER & \from WEINE \key{natural join} ERZEUGER \\
+	\where WEINE.Weingut \key{=} ERZEUGER.Weingut &\\
+	\hline
+	\key{Verbunde als explizite Operatoren} & \key{expliziter Verbund: cross join}\\
+	\hline
+	$\bullet$ Verbund mit beliebigem Prädikat & $\bullet$ Kreuzprodukt\\
+	\select * & \select *\\
+	\from WEINE \key{join} ERZEUGER & \from WEINE \key{,} ERZEUGER\\
+	\key{on} WEINE.Weingut = ERZEUGER.Weingut & \\
+	$\bullet$ Gleichverbund mit using & $\bullet$ als cross join\\
+	\select * & \select *\\
+	\from WEINE \key{join} ERZEUGER & \from WEINE \key{cross join} ERZEUGER\\
+	\key{using} (Weingut) & \\
+	\hline
+\end{tabular}
+}
+
+\subsection{Know-How}
+
+{\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ll}
+	$\bullet$ Umbenennung von Zwischenrelationen & \select Ergebnis.Weingut \\
+	 & \from (WEINE natural join ERZEUGER) \key{as} Ergebnis \\
+	$\bullet$ \key{as} ist optional. Äquivalent: & \select Ergebnis.Weingut \\
+	 & \from (WEINE natural join ERZEUGER) Ergebnis \\
+	$\bullet$ Duplikate werden nur mit \key{distinct} entfernt &  \select \key{distinct} Name\\
+	 & \from WEINE \\
+	$\bullet$ \key{Präfixe} für Eindeutigkeit & \select Name, \key{ERZEUGER.}Weingut\\
+	 & \from WEINE natural join ERZEUGER \\
+	$\bullet$ Sortierung der Ergebnisrelation & \select * \from WEINE \\
+	 \ \ aufsteigend: \key{asc}; absteigend: \key{desc}& \key{order by} Jahrgang \\
+	 $\bullet$ Anfrageausdruck, der in der Anfrage  & \key{with} anfrage-name [(spalten-liste)] \\ 
+	 mehrfach referenziert werden kann & \textbf{as} ( anfrage-ausdruck )\\
+\end{tabular}
+}
+
+\subsection{\where}
+
+\select ... \from ...
+\key{where} bedingung \\
+\\
+\textbf{Form der Bedingung:}
+\begin{itemize}
+	\itemsep0em
+	\item \key{Vergleiche} Attribut mit Konstante (<,>,=,<> (ungleich),...)
+	\item \key{Vergleiche} zwei Attribute mit vergleichbaren Wertebereichen
+	\item verwende logische Konnektoren (\key{or}, \key{and}, \key{not})
+	\item \key{Verbundbedingung} (s. Verbunde): $relation1.attribut = relation2.attribut$
+	\item \key{Bereichsselektion}:  
+	\begin{itemize}
+		\item Notation: $attribut\ \key{between}\ konstante1\ \key{and}\ konstante2$
+		\item als Abkürzung für: $attribut\ \leq\ konstante1\ \key{and}\ attribut\ \geq\ konstante2$
+		\item beschränke Attributwerte auf ein abgeschlossenes Intervall
+	\end{itemize}
+	\item \key{Ungewissheitsselektion}:
+	\begin{itemize}
+		\item Notation: $attribut\ \key{like}\ spezialkonstante$
+		\item Mustererkennung in Strings
+		\item \%: kein oder beliebig viele Zeichen; \_: genau ein Zeichen
+	\end{itemize}
+\end{itemize}
+
+\subsection{Mengenoperationen}
+
+\begin{itemize}
+	\itemsep0em
+	\item Mengenoperationen erfordern kompatible Wertebereiche
+	\item Vereinigung, Durchschnitt und Differenz als \key{union}, \key{intersect} und \key{except}
+	\item \key{corresponding by} gibt die Attributliste an, über der die Mengenoperation ausgeführt werden soll
+	\item Teilmenge: $attribut\ \key{in}\ (SFW-Block)$
+	\item[\hint] siehe Tabelle in 1.3!
+	\item[\hint] union $\rightarrow$ Duplikateliminierung
+	\item[\hint] union \key{all} $\rightarrow$ mit Duplikaten
+\end{itemize}
+
+\subsection{Skalare Ausdrücke}
+
+\begin{itemize}
+	\itemsep0em
+	\item Umbenennung von Spalten: \key{as}
+	\item Aktuelle Länge des Strings: \key{charlength}
+	\item Suchen einer Teilzeichenkette an bestimmten Positionen des Strings: \key{substring}
+	\item Aktuelles Datum: \key{current\_date} (+,-,*)
+	\item Aktuelle Zeit: \key{current\_time} (+,-,*)
+	\item Anwendung ist tupelweise
+\end{itemize}
+
+%\subsection{Bedingte Ausdrücke}
+%
+%\begin{itemize}
+%	\item \key{case}: Ausgabe eines Wertes in Abhängigkeit von der Auswertung eines Prädikats
+%\end{itemize}
+%
+%\begin{tabular}{|ll|}
+%	\hline
+%	\key{case} & \select \key{case} \\
+%	\key{when} $prädikat_1$ \key{then} $ausdruck_1$ & \key{when} Farbe = \glq Rot\grq\ \key{then} \glq Rotwein\grq\\
+%	... & \key{when} Farbe = \glq Weiß\grq\ \key{then} \glq Weißwein\grq \\
+%	\key{when} $prädikat_{n-1}$ \key{then} $ausdruck_{n-1}$ & \key{else} \glq Sonstiges\grq\\
+%	$[$\key{else} $ausdruck_n$$]$ & \key{end} as Weinart, Name \from WEINE \\
+%	\key{end} & \\
+%	\hline
+%\end{tabular}
+%
+%\subsection{Typkonvertierung}
+%
+%\begin{itemize}
+%	\item explizite Konvertierung des Typs von Ausdrücken
+%	\item \key{cast}(ausdruck \key{as} typname)
+%\end{itemize}
+
+\subsection{Quantoren und Mengenvergleiche}
+
+\hint in Schachtelung mit in/exists immer \select * in der Unterabfrage verwenden, ist ja egal, was sie berechnet \\
+\hint exists und in kann man auch durch join ersetzen \\
+
+\textbf{Quantoren:}
+\begin{itemize}
+	\itemsep0em
+	\item \key{all}, \key{any}, \key{some}
+	\item Notation: attribut $\theta$ \{ \key{all} | \key{any} | \key{some} \} (
+	\item[] \select attribut
+	\item[] \from ...\where ...)
+	\begin{itemize}
+		\item $\theta$ vergleicht das Attribut mit den Attributen aus dem SFW-Block
+		\item \key{all}: Bedingung wird erfüllt, wenn der Vergleich für alle Tupel aus dem SFW-Block mit attribut true wird
+		\item \key{any} bzw. \key{some}: Bedingung wird erfüllt, wenn der Vergleich mit mindestens einem Tupel des inneren SFW-Blocks true wird
+	\end{itemize}
+	\item \key{in}: Bedingung wird erfüllt, wenn das Attribut einem Tupel der Ergebnisrelation entspricht
+	\item Notation: attribut \key{in} (SFW-Block)
+\end{itemize}
+
+\textbf{Beispiel}: \\
+
+{\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|lp{.35\textwidth}l|}
+	\hline
+	Bestimmung des ältesten Weines & alle Weingüter, die Rotweine produzieren & \textbf{in}\\
+	\hline
+	\select * &\select * & \select * \\ 
+	\from WEINE & \from ERZEUGER & \from Weine w1\\
+	\where Jahrgang <= \key{all} ( & \where Weingut = \key{any} ( & \where w1.name \key{in}(\\
+	\select Jahrgang \from WEINE) & \select Weingut \from WEINE & \select w2.name \\
+	& \where Farbe = \glq Rot\grq& \from Weinbestand wb \\
+	&& \where wb.Status = 'verfügbar') \\
+	\hline
+\end{tabular}
+}
+\\
+\\
+\textbf{exists:}
+\begin{itemize}
+	\itemsep0em
+	\item einfache Form der Schachtelung
+	\item \where \key{exists} ( SFW-Block )
+	\item liefert true, wenn der SFW-Block \textbf{nicht} leer ist
+\end{itemize}
+
+\textbf{Beispiel}: \\
+
+{\renewcommand{\arraystretch}{1.2}
+	\begin{tabular}{|ll|}
+		\hline
+		Weingüter, die einen Wein älter als 1990 anbieten & Weingüter aus Bordeaux ohne gespeicherte Weine \\
+		\hline
+		\select * \from ERZEUGER e&\select *\from ERZEUGER e\\
+		\where \key{exists} ( & \where Region = \glq Bordeaux\grq\ \textbf{and} \key{not exists}  ( \\
+		\select * \from WEINE & \select * \from WEINE \\
+		\where Weingut = e.Weingut \textbf{and} Jahrgang < 1990)& \where Weingut = e.Weingut \\
+		\hline
+	\end{tabular}
+}
+
+\subsection{Aggregatfunktionen und Gruppierung}
+
+\begin{itemize}
+	\itemsep0em
+	\item \key{Aggregatfunktionen} berechnen neue Werte für eine gesamte Spalte, etwa die Summe oder den Durchschnitt der Werte einer Spalte
+	\begin{itemize}
+		\item \key{count}: berechnet Anzahl der Werte einer Ergebnis-Spalte
+		\item \key{sum}: berechnet die Summe der Werte einer Spalte (nur für \textbf{numerische} Wertebereiche)
+		\item \key{avg}: berechnet den arithmetischen Mittelwert der Werte einer Spalte (nur für \textbf{numerische} Wertebereiche)
+		\item \key{max} bzw. \key{min}: berechnen den größten bzw. kleinsten Wert einer Spalte
+		\item optional auch mit distinct/all außer für count(*)
+		\begin{itemize}
+			\item \key{distinct}: vor Anwendung der Aggregatfunktion werden doppelte Werte aus der Menge von Werten, auf die die Funktion angewendet wird, entfernt
+			\item \key{all}: Duplikate gehen mit in die Berechnung ein (Default)
+			\item Nullwerte werden vor Anwendung eliminiert 
+		\end{itemize}
+	\item liefern nur einen Wert, also in \where-Klausel verwendbar
+	\item[\textbf{\textcolor{red}{!}}] Schachtelung von Aggregatfunktionen nicht erlaubt
+	\end{itemize}
+\end{itemize}
+
+\textbf{Beispiel:} \\
+\begin{tabular}{|p{.4\textwidth}p{.33\textwidth} p{.35\textwidth }|}
+	\hline
+	Anzahl der verschiedenen Weinregionen & Weine, die älter als der Durchschnitt sind & alle Weingüter, die nur einen Wein liefern \\
+	\hline
+	\select \key{count} (\key{distinct} Region) & \select Name, Jahrgang & \select * \from ERZEUGER e \\
+	\from ERZEUGER & \from WEINE & \where 1 =  \\
+	& \where Jahrgang $<$  & (\select \key{count(*)}  \\
+	& (\select \key{avg}(Jahrgang)  & \from WEINE w)\\
+	& \from WEINE) & \where w.Weingut = e.Weingut \\
+	\hline
+\end{tabular}
+
+\begin{itemize}
+	\itemsep0em
+	\item \key{Gruppierung}: Berechnung der Funktionen pro Gruppe, z.B. der Durchschnittspreis pro Warengruppe oder der Gesamtumsatz pro Kunde
+	\item Notation: \select ...
+		\from ...
+		[\where ...]
+		[\key{group by} attributliste]
+	\item zulässige Attribute hinter select bei Gruppierung
+	\begin{itemize}
+		\item Gruppierungsattribute G (Ausgabeattribute müssen in Gruppierung stehen)
+		\item Aggregationen auf Nicht-Gruppierungsattributen R - G
+	\end{itemize}
+\end{itemize}
+
+\textbf{Beispiel:} \\
+\begin{tabular}{|ll|}
+	\hline
+	Anzahl der Rot- und Weißweine:  & Regionen mit mehr als einem Wein: \\
+	\hline
+	\select Farbe, \key{count(*)} as Anzahl & \select Region, \key{count(*)} as Anzahl \\
+	\from WEINE & \from ERZEUGER \textbf{natural join} WEINE \\
+	\key{group by} Farbe & \key{group by} Region \\
+	& \key{having count(*)} $>$ 1\\
+	\hline
+\end{tabular}
+
+%\subsection{Rekursion}
+%
+%\begin{itemize}
+%	\item Problem: Zyklen bei Rekursion
+%\end{itemize}
+%
+%\begin{tabular}{|ll|}
+%	\hline
+%	\textbf{Notation} & \textbf{Rekursiver Teil} \\
+%	\hline
+%	\key{with recursive} rekursive-tabelle \key{as} ( &  -- Initialisierung \\
+%	anfrage-ausdruck -- rekursiver Teil & \select ... \from tabelle  \where ... \\
+%	) & -- Rekursionsschritt\\
+%	$[traversierungsklausel] [zyklusklausel]$ &  \textbf{union all}\\
+%	anfrage-ausdruck -- nicht rekursiver Teil &  \from tabelle, rekursionstabelle\\
+%	 & \where rekursionsbedingung \\
+%	 \hline
+%\end{tabular}\\
+%\\
+%\textbf{Beispiel:}:\\
+%\\
+%\begin{tabular}{|ll|}
+%	\hline
+%	\key{with recursive} TOUR(Abfahrt, Ankunft) \key{as} ( & BEISPIEL VON ZETTEL \\
+%	\select Abfahrt, Ankunft & \\
+%	\from BUSLINIE & \\
+%	\where Abfahrt = ’Nuriootpa’ & \\
+%	\textbf{union all} & \\
+%	\select T.Abfahrt, B.Ankunft & \\
+%	\from TOUR T, BUSLINIE B & \\
+%	\where T.Ankunft = B.Abfahrt) & \\
+%	\select distinct * \from TOUR & \\
+%	\hline
+%\end{tabular}
+
+\section{Algebra}
+
+\subsection{Begriffe}
+
+\begin{tabular}{lp{13cm}}
+	\key{Anfrage} & Folge von Operationen, die aus den Basisrelationen eine Ergebnisrelation berechnet\\
+	\key{Sicht} & Folge von Operationen, die unter einem Sichtnamen langfristig abgespeichert wird und unter diesem Namen wieder aufgerufen werden kann, ergibt eine \key{Sichtrelation}\\
+\end{tabular}
+
+\textbf{Kategorien}: Relationenalgebra, Kalküle, SQL,...
+
+\subsection{Kriterien für Anfragesprachen}
+\begin{tabular}{lp{11cm}}
+	\key{Ad-Hoc-Formulierung} & Anfrage ohne vollständiges Programm formulieren \\
+	\key{Deskriptivität} & Benutzer soll formulieren „Was will ich haben?“, nicht „Wie komme ich an das, was ich haben will?“ \\
+	\key{Mengenorientiertheit} & jede Operation soll auf Mengen von Daten gleichzeitig arbeiten, nicht „one-tuple-at-a-time“ \\
+	\key{Abgeschlossenheit} & Ergebnis ist wieder eine Relation\\
+	\key{Adäquatheit} & alle Konstrukte des zugrundeliegenden Datenmodells werden unterstützt \\
+	\key{Orthogonalität} & Sprachkonstrukte sind in ähnlichen Situationen auch ähnlich anwendbar \\
+	\key{Optimierbarkeit} & Sprache besteht aus wenigen Operationen, für die es Optimierungsregeln gibt \\
+	\key{Effizienz} & jede Operation ist effizient ausführbar (jede Operation hat eine Komplexität $\leq O(n^2)$, $n$ Anzahl der Tupel einer Relation) \\
+	\key{Sicherheit} & keine Endlosschleife oder unendlich-Ergebnisse bei syntaktisch korrekter Anfrage \\
+	\key{Eingeschränktheit} & Anfragesprache darf keine komplette Programmiersprache sein \\
+	\key{Vollständigkeit} & Sprache muss man mindestens die Anfragen einer Standardsprache (Bsp: Relationenalgebra) ausdrücken können \\
+\end{tabular}
+
+\subsection{Verbundvarianten}
+
+\begin{tabular}{lp{10cm}}
+	\key{Gleichverbund} (equi-join) & Gleichheitsbedingung über explizit angegebene und evtl. verschiedene Attribute \\& $r(R) \Bowtie_{C=D} r(S)$ \\
+	\key{Theta-Verbund} ($\theta$-join) & beliebige Verbundbedingung \\& $r(R) \Bowtie_{C > D} r(S)$ \\
+	\key{Semi-Verbund} & nur Attribute eines Operanden erscheinen im Ergebnis  \\& $r(L) \times r(R) = \pi_L ((r(L) \Bowtie r(R))$ \\
+	%\key{äußere Verbunde} (outer join): &\\
+	% & \includegraphics[width=9cm]{outerjoin.png} \\
+\end{tabular}
+
+
+
+\section{Kalküle}
+
+\begin{itemize}
+	\itemsep0em
+	\item eingeführt um zu schauen, ob die Anfrage überhaupt terminiert
+	\item \key{Kalkül}: eine formale logische Sprache zur Formulierung von Aussagen
+	\item Kalküle zur Formulierung von Datenbank-Anfragen
+	\item \key{Anfrage} hat die Form $ \{f(x) | p(x)\} $
+	\begin{itemize}
+		\item $x$ bezeichnet Menge von freien Variablen $x = \{x_1 : D_1, . . . , x_n : D_n\}$
+		\item $f$ bezeichnet Ergebnisfunktion über $x$
+		\item $p$ Selektionsprädikat über freien Variablen $x$
+	\end{itemize}
+\end{itemize}
+
+\subsection{\key{Tupelkalkül}}
+
+\begin{itemize}
+	\itemsep0em
+	\item Variablen variieren über Tupelwerte (entsprechend den Zeilen einer Relation)
+	\item Beispiel: $\{w | w \in WEINE \wedge w.Farbe = \glq Rot\grq \}$
+\end{itemize}
+
+\textbf{Beispiele}:
+\vspace{1em}
+ \\
+\begin{tabular}{p{\textwidth}}
+	\textbf{Verbund} \\
+	$\{\langle e.Weingut \rangle | e \in ERZEUGER \wedge w \in WEINE \wedge e.Weingut = w.Weingut\}$\\
+	\textbf{Schachtelung} \\
+	$\{\langle w.Name, w.Weingut \rangle | w \in WEINE \wedge \exists e \in ERZEUGER(w.Weingut = e.Weingut \wedge e.Region = \glq Bordeaux \grq)\}$
+\end{tabular}
+
+
+%\subsection{\key{Bereichskalkül}}
+%
+%\begin{itemize}
+%	\itemsep0em
+%	\item Datentypangabe erfolgt in der Regel implizit und wird nicht explizit deklariert!
+%	\item \key{Infixnotation}: $x = y$, $42 > x$ oder $3 + 7 = 11$
+%	\item Prädikatanwendungen notiert als $R(t_1, . . . , t_n)$ für einen Relationennamen $R$ ($n$ Stelligkeit von $R$), Bsp: $ERZEUGER(x, \glq Hessen\grq,z)$
+%	\item Anfragen: $\{x_1, . . . , x_n | \phi(x_1, . . . , x_n)\}$
+%	\begin{itemize}
+%		\item $\phi$ ist Formel für Variablen $x_1,...,x_n$
+%		\item Ergebnis ist Menge von Tupeln
+%		\item Bsp: $\{x | ERZEUGER(x, y,z) \wedge z = \glq Hessen\grq\}$
+%	\end{itemize}
+%	\item \key{Sichere Anfrage}: Anfragen, die für jeden Datenbankzustand $\sigma(R)$ ein endliches Ergebnis liefern
+%	\item \key{Basiskalkül}:
+%	\begin{itemize}
+%		\item Einschränkung des Bereichskalküls
+%		\item Wertebereich: ganze Zahlen (und Strings)
+%		\item Datentypprädikate werden wie bei der Relationenalgebra auf Gleichheit und elementare Vergleichsoperatoren eingeschränkt
+%		\item Funktionsanwendungen sind nicht erlaubt; nur Konstanten dürfen neben Bereichsvariablen als Terme verwendet werden
+%	\end{itemize}
+%	\item existenziell gebunden Unteranfragen können aufgelöst (vereinfacht) werden
+%	\item universell gebundene Unteranfragen können \textbf{nicht} aufgelöst werden
+%\end{itemize}
+%
+%\textbf{Beispiele:}
+%\vspace{1em}
+%\\
+%\begin{tabular}{l}
+%	\textbf{Regionen mit mehr als zwei Weingütern} \\
+%	$\{z | ERZEUGER(x, y,z) \wedge ERZEUGER(a,b,c) \wedge a \neq x\}$ \\
+%	\textbf{Aus welchen Regionen gibt es Rotweine?} \\
+%	$\{z | ERZEUGER(x, y,z)\wedge\exists a \exists b \exists c \exists d(WEIN(a, b, c, d, x)\wedge c = \glq Rot\grq )\}$ \\
+%	$\{z | ERZEUGER(x, y,z) \wedge (WEIN(a, b, c, d, x) \wedge c = \glq Rot\grq )\}$ \\
+%	\textbf{Welches Weingut hat nur Weine mit Jahrgang nach 1995 im Angebot?} \\
+%	$\{x | ERZEUGER(x, y,z)\wedge \forall a \forall b \forall c \forall d(WEIN(a, b, c, d, x) \Rightarrow d > 1995)\}$ \\
+%\end{tabular}
+
+\section{Physische Datenorganisation}
+
+\subsection{Hierarchie der Speicher}
+
+\begin{tabular}{llclr}
+	\textcolor{darkgreen}{SCHNELL} && \textcolor{yellow}{OKAY} && \textcolor{red}{LANGSAM} \\
+	Prozessor & Cache-Speicher & Hauptspeicher & Sekundärspeicher & Tertiärspeicher \\
+\end{tabular}\\
+\\
+Für uns sind nur \key{Hauptspeicher} (RAM, flüchtig, nicht so groß) und \key{Sekundärspeicher} (z.B. Festplatte, nicht so schnell, groß) wichtig, da man auf dem Prozessor mit Registern oder dem Cache-Speicher des Prozessors nicht manuell arbeitet. Tertiärspeicher sind zum Entfernen gedacht (z.B. USB-Sticks, nicht gut, aber unlimitiert, unterscheide zwischen nearline- und offline(manuell)).
+\\
+\begin{itemize}
+	\itemsep0em
+	\item Eigenschaften der Hierarchie:
+		\item \begin{itemize}
+		\itemsep0em
+		\item Ebene x (etwa Ebene 3, der Hauptspeicher) hat wesentlich schnellere Zugriffszeit als Ebene x + 1 (etwa Ebene 4, der Sekundärspeicher)
+		\item aber gleichzeitig einen weitaus höheren Preis pro Speicherplatz
+		\item und deshalb eine weitaus geringere Kapazität
+		\item Lebensdauer der Daten erhöht sich mit der Höhe der Ebenen
+	\end{itemize}
+	\item \key{Zugriffslücke}: Unterschiede zwischen den Zugriffsgeschwindigkeiten auf die Daten
+	\item[$\rightarrow$] um diese zu verringern, verwendet man \key{Caches}
+	\item \key{Cache} (Hauptspeicher-Cache) schnellere Halbleiterspeicher-Technologie für die Bereitstellung von Daten an Prozessor
+	\item Plattenspeicher-Cache im Hauptspeicher: \key{Puffer}
+	\item[$\rightarrow$] funktioniert nicht gut, wenn immer neue Daten benötigt werden
+	\item[$\rightarrow$] deshalb Pufferverwaltung des Datenbanksystems wichtig
+\end{itemize}
+
+\subsection{Pufferverwaltung}
+
+\begin{itemize}
+	\itemsep0em
+	\item \key{Puffer}: ausgezeichneter Bereich des Hauptspeichers
+	\item in \key{Pufferrahmen} gegliedert, jeder Pufferrahmen kann eine Seite
+	der Platte aufnehmen
+	\item Aufgaben:
+	\begin{itemize}
+		\item muss angeforderte Seiten im Puffer suchen: effiziente Suchverfahren
+		\item parallele Datenbanktransaktionen: geschickte Speicherzuteilung
+		\item Puffer gefüllt: adäquate Seitenersetzungsstrategien
+	\end{itemize}
+\end{itemize}
+
+\key{Seitenersetzungsstrategien}:
+\begin{itemize}
+	\itemsep0em
+	\item Speichersystem fordert Seite E2 an, die nicht im Puffer vorhanden	ist
+	\item Sämtliche Pufferrahmen sind belegt
+	\item vor dem Laden von E2 Pufferrahmen freimachen
+	\item nach den unten beschriebenen Strategien Seite aussuchen
+	\item Ist Seite in der Zwischenzeit im Puffer verändert worden, so wird sie nun auf Platte zurückgeschrieben
+	\item Ist Seite seit Einlagerung in den Puffer nur gelesen worden, so kann sie überschrieben werden (verdrängt)
+	\item Verfahren:
+	\begin{itemize}
+		\item Demand-paging-Verfahren: genau eine Seite im Puffer durch angeforderte Seite ersetzen
+		\item Prepaging-Verfahren: neben der angeforderten Seite auch weitere Seiten in den Puffer einlesen, die eventuell in der Zukunft benötigt werden
+		\item optimale Strategie: Welche Seite hat maximale Distanz zu ihremnächsten Gebrauch? (nicht realisierbar, zukünftiges Referenzverhalten nicht vorhersehbar)
+	\end{itemize}
+\end{itemize}
+
+\subsection{Seiten blabla}
+
+\begin{itemize}
+	\itemsep0em
+	\item \key{Block}: kleinste adressierbare Einheit auf Externspeicher, Zuordnung zu Seiten im Hauptspeicher
+	\item Aufbau von \key{Seiten}:
+	\begin{itemize}
+		\item Header: Informationen über Vorgänger- und Nachfolger-Seite, eventuell auch Nummer der Seite selbst; Informationen über Typ der Sätze; freier Platz
+		\item Datensätze
+		\item unbelegte Bytes
+	\end{itemize}
+	\item Organisation der Seiten: doppelt verkettete Liste
+	\item adressierbare Einheiten: Zylinder, Spuren, Sektoren, Blöcke oder Seiten, Datensätze in Blöcken oder Seiten, Datenfelder in Datensätzen
+	\item Maß für die Geschwindigkeit von Datenbankoperationen: Anzahl der Seitenzugriffe auf dem Sekundärspeicher (wegen Zugriffslücke)
+	\item \key{Sätze} fester Länge: SQL: Datentypen fester und variabler Länge (Verwaltungsblock mit Typ eines Satzes und Löschbit; Freiraum zur Justierung des Offset; Nutzdaten des Datensatzes)
+\end{itemize}
+
+\subsection{TID-Konzept}
+
+\begin{itemize}
+	\itemsep0em
+	\item \key{Tupel-Identifier} (TID) ist Datensatz-Adresse bestehend ausSeitennummer und Offset
+	\item Offset verweist innerhalb der Seite bei einem Offset-Wert von i auf den i-ten Eintrag in einer Liste von Tupelzeigern (Satzverzeichnis), die am Anfang der Seite stehen
+	\item Jeder Tupel-Zeiger enthält Offsetwert
+	\item Verschiebung auf der Seite: sämtliche Verweise von außen bleiben unverändert
+	\item Verschiebungen auf eine andere Seite: statt altem Datensatz neuer TID-Zeiger
+	\item diese zweistufige Referenz aus Effiziengründen nicht wünschenswert: Reorganisation in regelmäßigen Abständen
+\end{itemize}
+
+\subsection{Klassifikation der Speichertechniken}
+
+\begin{itemize}
+	\itemsep0em
+	\item[] \textbf{Dateiorganisation}:
+	\item Dateiorganisationsform: Form der Speicherung der internen Relation
+	\begin{itemize}
+		\item unsortierte Speicherung von internen Tupeln: Heap-Organisation
+		\item sortierte Speicherung von internen Tupeln: sequenzielle Organisation
+		\item gestreute Speicherung von internen Tupeln: Hash-Organisation
+		\item Speicherung von internen Tupeln in mehrdimensionalen Räumen: mehrdimensionale Dateiorganisationsformen
+	\end{itemize}
+	\item üblich: Sortierung oder Hashfunktion über Primärschlüssel sortierte Speicherung plus zusätzlicher Primärindex über
+	\item Sortierattributen: \key{index-sequenzielle} Organisationsform
+	\item[] \textbf{Zugriffspfade}
+	\item \key{Zugriffspfad}: über grundlegende Dateiorganisationsform hinausgehende Zugriffsstruktur, etwa Indexdatei
+	 \begin{itemize}
+	 	\item Einträge $(K, K \uparrow)$: K der Wert eines Primär- oder Sekundärschlüssels, $K \uparrow$ Datensatz oder Verweis auf Datensatz
+	 	\item K: Suchschlüssel, genauer: Zugriffsattribute und Zugriffsattributwerte
+		 \item $K \uparrow$: Datensatz selbst: Zugriffspfad wird Dateiorganisationsform; Adresse eines internen Tupels: Primärschlüssel; Liste von Tupeladressen: Sekundärschlüssel; nachteilig ist variable Länge der Indexeinträge
+	 \end{itemize}
+	 \item[] \textbf{Indexe} weiter unten!
+\end{itemize}
+
+\subsection{Abbildungen der Datenstrukturen}
+
+\begin{itemize}
+	\itemsep0em
+	\item Abbildung der konzeptuellen Ebene auf interne Datenstrukturen
+\end{itemize}
+
+\begin{tabular}{|lclcl|}
+	\hline
+	\key{Konzeptuelle Ebene} && \key{Interne Ebene} && \key{Dateisystem/Platte} \\
+	\hline
+	Relationen & $\rightarrow$ & Logische Dateien & $\rightarrow$ & Physische Dateien \\
+	Tupel & $\rightarrow$ & Datensätze & $\rightarrow$ & Seiten/Blöcke \\
+	Attributwerte & $\rightarrow$ & Felder & $\rightarrow$ &  Bytes \\
+	\hline
+\end{tabular}
+
+\begin{itemize}
+	\itemsep0em
+	\item Varianten der Abbildung:
+	\begin{itemize}
+		\item jede Relation in je einer logischen Datei, diese insgesamt in einer einzigen physischen Datei
+		\item Cluster-Speicherung, also mehrere Relationen in einer logischen Datei
+	\end{itemize}
+\end{itemize}
+
+\subsection{Index}
+
+\begin{tabular}{lp{13cm}}
+	\key{Primärindex} & Index auf Primärschlüssel\\
+	\key{Sekundärindex} &Index auf irgendwas anderes \\
+	\key{dünnbesetzt} & nicht für jeden Zugriffsattributwert K ein Eintrag in Indexdatei bzw. du kommst nicht zu jedem Tupel! $\rightarrow$ geclustert, sonst kommt man gar nicht hin\\
+	\key{indexsequenzielle Datei} &  sortierte Datei mit dünnbesetztem Index als Primärindex \\
+	\key{dichtbesetzter} Index & für jeden Datensatz der internen Relation ein Eintrag in Indexdatei bzw. du kommst zu jedem Tupel \\
+	\key{geclusterter} Index & in der gleichen Form sortiert wie zugehörige interne Relation \\
+	\key{nicht-geclusterter }Index & Index ist anders organisiert als interne Relation \\
+	\key{statische Zugriffsstruktur} & optimal nur bei bestimmter (fester) Anzahl von verwaltenden Datensätzen \\
+	\key{dynamische Zugriffsstruktur}  & unabhängig von der Anzahl der Datensätze optimal \\
+\end{tabular}
+
+\begin{itemize}
+	\itemsep0em
+	\item Primärindex kann dünnbesetzt und geclustert sein
+	\item jeder dünnbesetzte Index ist auch ein geclusterter Index, aber nicht umgekehrt
+	\item Sekundärindex kann nur dichtbesetzter, nicht-geclusterter Index sein
+	\item[] %\includegraphics[width=.9\textwidth]{index.png}
+\end{itemize}
+
+\subsection{Statische Verfahren}
+
+\begin{itemize}
+	\itemsep0em
+	\item direkte Organisationsformen: keine Hilfsstruktur, keine Adressberechnung (Heap, sequenziell)
+	\item statische Indexverfahren für Primärindex und Sekundärindex
+	\item[] \textbf{Heap}:
+	\item völlig unsortiert speichern
+	\item physische Reihenfolge der Datensätze ist zeitliche Reihenfolge der Aufnahme von Datensätzen
+	\item[] \textbf{Sequenzielle Speicherung}:
+	\item sortiertes Speichern der Datensätze
+	\item[] \textbf{Indexsequenzielle Dateiorganisation}
+	\item Kombination von sequenzieller Hauptdatei und Indexdatei: indexsequenzielle Dateiorganisationsform
+	\item Indexdatei kann geclusterter, dünnbesetzter Index sein
+	\item mindestens zweistufiger Baum (Blattebene ist Hauptdatei (Datensätze), jede andere Stufe ist Indexdatei)
+	\item Datensätze in Indexdatei: (Primärschlüsselwert, Seitennummer)
+	\item Problem:  automatische Anpassung der Stufenanzahl nicht vorgesehen, benötigt unnötig hohen Speicherplatz (unausgeglichen)
+\end{itemize}
+
+\subsection{B+-Baum}
+
+\begin{itemize}
+	\itemsep0em
+	\item Hauptdatei als letzte (Blatt-)Stufe des Baumes integrieren
+	\item in inneren Knoten nur noch Zugriffsattributwert und Zeiger auf nachfolgenden Seite der nächsten Stufe
+	\item jede Blattseite enthält zwischen y und 2y Einträgen
+	\item die Wurzelseite enthält maximal 2x Einträge
+	\item alle anderen enthalten zwischen x und 2x Einträgen
+	\item delete gegenüber B-Baum effizienter
+	\item B+-Baum ist dynamische, mehrstufige, indexsequenziellen Datei
+	\item häufig als Primärindex eingesetzt (Index auf Primärschlüssel)
+	\item ein Tupel hat immer genau einen Tupelidentifier
+	\item Höhe des Baums: $1+\lceil log_{2x+1}(\frac{n}{2y})\rceil \leq h \leq 1+\lfloor log_{x+1}(\frac{n}{y})\rfloor$ für n Datensätze
+	\item[] %\includegraphics[width=.9\textwidth]{b+.png}
+\end{itemize}
+
+%\section{Anfragebearbeitung und -optimierung}
+%
+%\begin{tabular}{ll}
+%	bsize  & Blockgröße \\
+%	mem & Puffergröße in Anzahl der Blöcke \\
+%	$|r|$ & Anzahl Tupel in der Relation r \\
+%	$|b_r|$ & Anzahl von Blöcken, die Tupel aus r beinhalten \\
+%	$size_r$ & (mittlere) Größe von Tupeln aus r \\
+%	$f_r$ & Blockungsfaktor - wieviel Tupel aus r können in einem Block gespeichert werden: $f_r = \frac{bsize}{size_r}$  \\
+%	& bei kompakter Speicherung (nur eine Relation pro Block): $b_r = \lceil \frac{|r|}{f_r} \rceil$ \\
+%	$val_{A,r}$ & Anzahl verschiedener Werte für Attribut A in r \\
+%	$lev_{I(R(A))}$ & Anzahl der Indexebenen eines B+-Baums für Index $I(R(A))$ \\
+%\end{tabular}\\3
+%\\
+%Algorithmen:
+%\begin{itemize}
+%	\itemsep0em
+%	\item Sortierung: Externes Sortieren
+%	\item Selektion $\sigma_p (r)$
+%	\begin{itemize}
+%		\item Fulltable-Scan
+%		\item Index-Scan
+%	\end{itemize}
+%	\item Projektion $\pi$
+%	\item Aggregation
+%	\item Gruppierung
+%\end{itemize}
+%
+%Kosten Nested-Loops-Verbund:
+%ohne Indexunterstützung: costLoop = br + br*bs worst case
+%best case: br + bs
+%
+%\hint kleinere Relation soll immer die äußere Relation sein (siehe Nested-Loops worst case)
+%
+%MEM = PUFFERGRÖ?E
+%
+%flaschenhals
+
+\section{Transaktionen und so}
+
+\key{Transaktion} ist eine Folge von Operationen (Aktionen), die die Datenbank von einem konsistenten Zustand in einen konsistenten, eventuell veränderten, Zustand überführt, wobei das ACID-Prinzip eingehalten werden muss.
+
+\subsection{ACID-Eigenschaften}
+
+\begin{tabular}{p{7cm}p{11cm}}
+	Atomicity (\key{Atomarität}) & Transaktion wird entweder ganz oder gar nicht ausgeführt \\
+	\key{Consistency} (Konsistenz/Integritätserhaltung) & Datenbank ist vor Beginn und nach Beendigung einer Transaktion jeweils in einem konsistenten Zustand \\
+	Isolation (\key{Isolation})& 	Nutzer, der mit einer Datenbank arbeitet, sollte den Eindruck haben, dass er mit dieser Datenbank alleine arbeitet \\
+	Durability (\key{Dauerhaftigkeit} / Persistenz) & nach erfolgreichem Abschluss einer Transaktion muss das Ergebnis dieser Transaktion „dauerhaft“ in der Datenbank gespeichert werden \\
+\end{tabular}
+
+\subsection{Kommandos}
+
+\key{commit}: die Transaktion soll erfolgreich beendet werden \\
+\key{abort}: die Transaktion soll abgebrochen werden \\
+\key{read}(A,x): weise den Wert des DB-Objektes A der Variablen x zu \\
+\key{write}(x, A): speichere den Wert der Variablen x im DB-Objekt A   \\
+rl(x): Lesesperre (engl. read lock bzw. shared lock) auf einem Objekt x \\
+wl(x): Schreibsperre (engl. write lock bzw. exclusive lock) auf einem Objekt x \\
+Entsperren ru(x) und wu(x), oft zusammengefasst u(x) für engl. unlock 
+
+\subsection{Serialisierbarkeit}
+
+Eine verschränkte Ausführung mehrerer Transaktionen heißt \key{serialisierbar}, wenn ihr Effekt identisch zum Effekt einer (beliebig gewählten) seriellen Ausführung dieser Transaktionen ist. \\
+seriell $\Leftrightarrow$ Konfliktgraph ist \key{azyklisch} (Kreisfrei)
+\begin{itemize}
+	\itemsep0em
+	\item[] Voraussetzungen für Konflikt:
+	\item Operationen in verschiedenen Transaktionen
+	\item Operationen auf der gleichen Relation
+	\item mindestens eine Operation ist ein write
+\end{itemize}
+
+\begin{tabular}{lll}
+	T1&T2&T3\\
+	\hline
+	r(x) &&\\
+	&r(y)&\\
+	&&r(x)\\
+	&w(y)&\\
+	r(y)&w(x)\\
+	w(y)&&\\
+	commit&commit&commit\\
+\end{tabular}
+
+\subsection{Redo-Log Buffer}
+
+Im wesentlichen ist es einfach nur eine Art auf bestimmte Längen beschränkter (daher Buffer) Redo-Log, in dem du all deine Operationen, die du ausführst, speicherst. \\
+In dem Moment, wo eine Operation abbricht (Szenario 1), oder externe Schäden/Unterbrechungen zum Absturz des Systems führen (Szenario 2), kann es sein, dass man den ursprünglichen Zustand wiederherstellen muss. \\
+Das passiert dann mittels des Redo-Log-Buffers, weil du da praktisch 'rückwärts' alle Operationen aufheben kannst, also die jeweiligen inversen Transaktionen etc. ausführst. \\
+IdR ist es als sog. zirkularer Buffer abgespeichert, d.h. eine cycled linked list, in der der letzte Eintrag wieder auf den ersten zeigt. \\
+In dem Moment, wo du die Maximallänge vollgeschrieben hast, fängst du einfach wieder von vorne an, und überschreibst den 'älteste' Eintrag, usw. \\
+\textbf{\textcolor{red}{!}}Wenn die Transaktion vor einem commit abbricht, sind die Aktionen noch nicht ausgeführt worden!
+
+\subsection{Check-Klausel}
+
+\key{check}: Festlegung weitere lokale Integritätsbedingungen innerhalb der zu definierenden Wertebereiche, Attribute und Relationenschemata
+\begin{lstlisting}[language=SQL]
+create table WEINE (
+WeinID int primary key,
+Name varchar(20) not null,
+Jahr int check(Jahr between 1980 and 2010),
+...
+)
+
+create domain WeinFarbe varchar(4)
+default 'Rot'
+check (value in ('Rot', 'Weiss', 'Rose'))
+\end{lstlisting}
+
+\end{document}
